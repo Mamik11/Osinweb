@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <title>Pocket OSINT v2.1</title>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+            --border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+            padding-bottom: 44px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 1.4rem;
+            color: var(--accent);
+            letter-spacing: 0.5px;
+        }
+
+        header p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        #pwa-status {
+            display: inline-block;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            color: #10b981;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card h2 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"], input[type="tel"], input[type="file"] {
+            width: 100%;
+            padding: 11px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-size: 0.95rem;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        button {
+            background-color: var(--accent);
+            color: #0f172a;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: transform 0.12s, background 0.15s;
+            text-align: center;
+        }
+
+        button:active {
+            background-color: var(--accent-hover);
+            transform: scale(0.97);
+        }
+
+        button.secondary {
+            background-color: transparent;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+        }
+
+        .result-box {
+            margin-top: 12px;
+            padding: 10px;
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            display: none;
+            word-break: break-word;
+        }
+
+        .tag {
+            font-size: 0.68rem;
+            background: #334155;
+            padding: 3px 7px;
+            border-radius: 4px;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🔍 Pocket OSINT v2.1</h1>
+        <p>Mobile Intelligence, Dorking & Metadata Suite</p>
+        <span id="pwa-status">● PWA Ready</span>
+    </header>
+
+    <!-- MODUL 1: PHONE NUMBER OSINT -->
+    <div class="card">
+        <h2>📱 Phone Number OSINT <span class="tag">Seluler</span></h2>
+        <div class="input-group">
+            <input type="tel" id="target-phone" placeholder="Contoh: 081234567890 atau +62812...">
+        </div>
+        <div class="btn-grid">
+            <button onclick="phoneAction('wa')">Buka Chat WA</button>
+            <button onclick="phoneAction('tg')">Cek Telegram</button>
+            <button class="secondary" onclick="phoneAction('dork')">Google Dork Nomor</button>
+            <button class="secondary" onclick="phoneAction('tc')">Truecaller Web</button>
+        </div>
+    </div>
+
+    <!-- MODUL 2: USERNAME & EMAIL -->
+    <div class="card">
+        <h2>👤 Username & Email <span class="tag">Identitas</span></h2>
+        <div class="input-group">
+            <input type="text" id="target-user" placeholder="Masukkan username atau email...">
+        </div>
+        <div class="btn-grid">
+            <button onclick="searchGoogleUser()">Google Dork</button>
+            <button onclick="openTool('https://whatsmyname.app/')">WhatsMyName</button>
+            <button onclick="searchSocial('instagram')">Instagram</button>
+            <button onclick="searchSocial('tiktok')">TikTok</button>
+            <button class="secondary" onclick="openTool('https://haveibeenpwned.com/')">Cek Data Breach</button>
+            <button class="secondary" onclick="openTool('https://epieos.com/')">Epieos (Email)</button>
+        </div>
+    </div>
+
+    <!-- MODUL 3: IP & LIVE DNS RESOLVER -->
+    <div class="card">
+        <h2>🌐 IP & Live DNS Lookup <span class="tag">API Live</span></h2>
+        <div class="input-group">
+            <input type="text" id="target-net" placeholder="IP (8.8.8.8) atau Domain (example.com)">
+        </div>
+        <div class="btn-grid">
+            <button onclick="lookupIP()">Info IP & Lokasi</button>
+            <button onclick="lookupDNS()">Live DNS Records</button>
+            <button class="secondary" onclick="netTool('whois')">WHOIS Lookup</button>
+            <button class="secondary" onclick="netTool('shodan')">Cek Shodan</button>
+        </div>
+        <div id="net-result" class="result-box"></div>
+    </div>
+
+    <!-- MODUL 4: IMAGE EXIF & REVERSE SEARCH -->
+    <div class="card">
+        <h2>🖼️ Image EXIF & Reverse <span class="tag">Lokal</span></h2>
+        <div class="input-group">
+            <input type="file" id="image-input" accept="image/*" onchange="extractExif(this)">
+        </div>
+        <div class="btn-grid">
+            <button onclick="openTool('https://lens.google.com/')">Google Lens</button>
+            <button class="secondary" onclick="openTool('https://yandex.com/images/')">Yandex Images</button>
+        </div>
+        <div id="exif-result" class="result-box"></div>
+    </div>
+
+    <!-- MODUL 5: GOOGLE DORKING GENERATOR -->
+    <div class="card">
+        <h2>📄 File & Dokumen Dork <span class="tag">Dorking</span></h2>
+        <div class="input-group">
+            <input type="text" id="target-dork" placeholder="Kata kunci atau domain (misal: go.id)">
+        </div>
+        <div class="btn-grid">
+            <button onclick="dorkFile('pdf')">Cari PDF</button>
+            <button onclick="dorkFile('xlsx')">Cari Excel/CSV</button>
+            <button class="secondary" onclick="dorkFile('sql')">Exposed DB/Env</button>
+            <button class="secondary" onclick="dorkFile('index')">Index Of / Dir</button>
+        </div>
+    </div>
+
+    <script>
+        // Registrasi Service Worker untuk PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(() => {
+                        document.getElementById('pwa-status').textContent = '● PWA Aktif & Tersimpan di Cache';
+                    })
+                    .catch(() => {
+                        document.getElementById('pwa-status').textContent = '● Mode Lokal (Jalankan lewat HTTPS untuk Install)';
+                    });
+            });
+        }
+
+        function openTool(url) {
+            window.open(url, '_blank');
+        }
+
+        // 1. Phone Number OSINT
+        function formatPhoneID(raw) {
+            let clean = raw.replace(/[^0-9]/g, '');
+            if (clean.startsWith('08')) {
+                clean = '62' + clean.substring(1);
+            }
+            return clean;
+        }
+
+        function phoneAction(type) {
+            const raw = document.getElementById('target-phone').value.trim();
+            if (!raw) return alert('Masukkan nomor telepon terlebih dahulu!');
+            const intl = formatPhoneID(raw);
+            const local = intl.startsWith('62') ? '0' + intl.substring(2) : intl;
+
+            if (type === 'wa') window.open(`https://wa.me/${intl}`, '_blank');
+            if (type === 'tg') window.open(`https://t.me/+${intl}`, '_blank');
+            if (type === 'tc') window.open(`https://www.truecaller.com/search/id/${local}`, '_blank');
+            if (type === 'dork') {
+                const query = encodeURIComponent(`"${local}" OR "${intl}" OR "+${intl}"`);
+                window.open(`https://www.google.com/search?q=${query}`, '_blank');
+            }
+        }
+
+        // 2. Username & Email
+        function searchGoogleUser() {
+            const val = document.getElementById('target-user').value.trim();
+            if (!val) return alert('Masukkan username atau email!');
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(`"${val}"`)}`, '_blank');
+        }
+
+        function searchSocial(platform) {
+            const val = document.getElementById('target-user').value.trim().replace('@', '');
+            if (!val) return alert('Masukkan username!');
+            if (platform === 'instagram') window.open(`https://www.instagram.com/${val}/`, '_blank');
+            if (platform === 'tiktok') window.open(`https://www.tiktok.com/@${val}`, '_blank');
+        }
+
+        // 3. IP & Live DNS API
+        async function lookupIP() {
+            const target = document.getElementById('target-net').value.trim();
+            const resBox = document.getElementById('net-result');
+            if (!target) return alert('Masukkan alamat IP!');
+
+            resBox.style.display = 'block';
+            resBox.innerHTML = '⏳ Mengambil geolokasi IP...';
+
+            try {
+                const res = await fetch(`https://ipapi.co/${target}/json/`);
+                const data = await res.json();
+                if (data.error) {
+                    resBox.innerHTML = `❌ ${data.reason || 'Gunakan format IP valid (contoh: 8.8.8.8).'}`;
+                } else {
+                    resBox.innerHTML = `
+                        <strong>IP:</strong> ${data.ip}<br>
+                        <strong>ISP/ASN:</strong> ${data.org} (${data.asn})<br>
+                        <strong>Lokasi:</strong> ${data.city}, ${data.region}, ${data.country_name}<br>
+                        <strong>Peta:</strong> <a href="https://maps.google.com/?q=${data.latitude},${data.longitude}" target="_blank">Buka Koordinat (${data.latitude}, ${data.longitude})</a>
+                    `;
+                }
+            } catch (e) {
+                resBox.innerHTML = '❌ Gagal mengambil data IP.';
+            }
+        }
+
+        async function lookupDNS() {
+            let domain = document.getElementById('target-net').value.trim().replace(/^https?:\/\//, '').split('/')[0];
+            const resBox = document.getElementById('net-result');
+            if (!domain) return alert('Masukkan nama domain (contoh: example.com)!');
+
+            resBox.style.display = 'block';
+            resBox.innerHTML = `⏳ Memindai DNS Records untuk <strong>${domain}</strong>...`;
+
+            try {
+                const types = ['A', 'MX', 'NS', 'TXT'];
+                let output = `<strong>DNS Records (${domain}):</strong><br>`;
+                for (let type of types) {
+                    const res = await fetch(`https://dns.google/resolve?name=${domain}&type=${type}`);
+                    const data = await res.json();
+                    if (data.Answer) {
+                        const records = data.Answer.map(r => r.data).join(', ');
+                        output += `<span style="color:#38bdf8">[${type}]</span> ${records}<br>`;
+                    }
+                }
+                resBox.innerHTML = output;
+            } catch (e) {
+                resBox.innerHTML = '❌ Gagal mengambil DNS record.';
+            }
+        }
+
+        function netTool(tool) {
+            const target = document.getElementById('target-net').value.trim();
+            if (!target) return alert('Masukkan domain atau IP!');
+            if (tool === 'whois') window.open(`https://who.is/whois/${target}`, '_blank');
+            if (tool === 'shodan') window.open(`https://www.shodan.io/search?query=${encodeURIComponent(target)}`, '_blank');
+        }
+
+        // 4. Image EXIF Extractor
+        function extractExif(input) {
+            const file = input.files[0];
+            const resBox = document.getElementById('exif-result');
+            if (!file) return;
+
+            resBox.style.display = 'block';
+            resBox.innerHTML = '⏳ Membaca metadata EXIF foto...';
+
+            EXIF.getData(file, function() {
+                const make = EXIF.getTag(this, "Make") || "Tidak diketahui";
+                const model = EXIF.getTag(this, "Model") || "Tidak diketahui";
+                const date = EXIF.getTag(this, "DateTimeOriginal") || "Tidak ada data waktu";
+                const lat = EXIF.getTag(this, "GPSLatitude");
+                const lon = EXIF.getTag(this, "GPSLongitude");
+
+                let gpsHtml = "Tidak ditemukan";
+                if (lat && lon) {
+                    const latRef = EXIF.getTag(this, "GPSLatitudeRef") || "N";
+                    const lonRef = EXIF.getTag(this, "GPSLongitudeRef") || "E";
+                    const decLat = (lat[0] + lat[1]/60 + lat[2]/3600) * (latRef === "S" ? -1 : 1);
+                    const decLon = (lon[0] + lon[1]/60 + lon[2]/3600) * (lonRef === "W" ? -1 : 1);
+                    gpsHtml = `<a href="https://maps.google.com/?q=${decLat},${decLon}" target="_blank">📍 Lihat Lokasi GPS (${decLat.toFixed(5)}, ${decLon.toFixed(5)})</a>`;
+                }
+
+                resBox.innerHTML = `
+                    <strong>Perangkat:</strong> ${make} ${model}<br>
+                    <strong>Waktu Foto:</strong> ${date}<br>
+                    <strong>Koordinat GPS:</strong> ${gpsHtml}
+                `;
+            });
+        }
+
+        // 5. Google Dorking
+        function dorkFile(type) {
+            const target = document.getElementById('target-dork').value.trim();
+            if (!target) return alert('Masukkan kata kunci atau domain!');
+
+            let dork = '';
+            if (type === 'pdf') dork = `"${target}" filetype:pdf`;
+            if (type === 'xlsx') dork = `"${target}" (filetype:xls OR filetype:xlsx OR filetype:csv)`;
+            if (type === 'sql') dork = `"${target}" (filetype:sql OR filetype:env OR filetype:log)`;
+            if (type === 'index') dork = `intitle:"index of" "${target}"`;
+
+            window.open(`https://www.google.com/search?q=${encodeURIComponent(dork)}`, '_blank');
+        }
+    </script>
+</body>
+</html>
